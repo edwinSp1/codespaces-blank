@@ -1,0 +1,117 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Load TensorFlow.js -->
+  <style>
+    .dot {
+    position: absolute;
+    /* add more styling here if needed */
+    border-radius:50%;
+    background-color: #f00;
+    width: 20px;
+    height: 20px;
+  }
+  .dropbtn {
+    background-color: #04AA6D;
+    border: none;
+    width: 10px;
+    height:10px;
+  }
+  
+  .dropdown {
+    position: absolute;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+  }
+  
+  .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+  
+  .dropdown-content a:hover {background-color: #ddd;}
+  
+  .dropdown:hover .dropdown-content {display: block;}
+  
+  .dropdown:hover .dropbtn {background-color: #3e8e41;}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <!-- Load Posenet -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
+</head>
+
+<body>
+    <video playsinline width="1280" height="720"></video> 
+
+</body>
+<!-- Place your code in the script tag below. You can also use an external .js file -->
+<script>
+
+  async function getVideo() {
+    console.log("starting vid")
+    // Prefer camera resolution nearest to 1280x720.
+    const constraints = {
+      audio: true,
+      video: { width: 1280, height: 720 },
+    };
+
+    await navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then((mediaStream) => {
+        const video = document.querySelector("video");
+        video.srcObject = mediaStream;
+        video.onloadedmetadata = () => {
+          video.play();
+        };
+      })
+      .catch((err) => {
+        // always check for errors at the end.
+        console.error(`${err.name}: ${err.message}`);
+      });
+    console.log("predicting...")
+    predict()
+  }
+  async function predict() {
+    const imageElement = document.querySelector('video')
+    var net = await posenet.load()
+    const pose = await net.estimateSinglePose(imageElement, {
+      flipHorizontal: false
+    })
+        for(var dot of document.querySelectorAll('div')) {
+            
+            dot.remove()
+            
+        }
+    for(var keyPoint of pose.keypoints) {
+      var dot = document.createElement('div')
+      /*
+      document.body.innerHTML += `
+        <div class="dropdown" style='top:${keyPoint.position.y}px; left:${keyPoint.position.y}px'>
+          <button class="dropbtn"></button>
+          <div class="dropdown-content">
+            <span>${keyPoint.part}</span>
+          </div>
+        </div>
+      */
+      dot.classList.add('dot')
+      dot.style.left = keyPoint.position.x + 'px'
+      dot.style.top = keyPoint.position.y + 'px'
+      document.body.appendChild(dot);
+      
+    }
+    window.requestAnimationFrame(predict)
+  }
+  getVideo()
+</script>
+
+</html>
